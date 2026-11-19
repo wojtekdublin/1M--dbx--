@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bridge Bidding: 1♥ / 1♠ – (Dbl) Transfers</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom card suit styling and subtle animations */
+        .suit-spade { color: #1e293b; }
+        .suit-heart { color: #e11d48; }
+        .suit-diamond { color: #f97316; }
+        .suit-club { color: #059669; }
+        
+        .card-hover {
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 24px -8px rgba(0, 0, 0, 0.15);
+        }
+        
+        @keyframes pulse-ring {
+            0% { transform: scale(0.95); opacity: 0.7; }
+            50% { transform: scale(1.02); opacity: 1; }
+            100% { transform: scale(0.95); opacity: 0.7; }
+        }
+        .animate-badge {
+            animation: pulse-ring 3s infinite ease-in-out;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-indigo-50 via-purple-50 to-pink-50 min-h-screen text-slate-800 antialiased selection:bg-indigo-200 selection:text-indigo-900">
+
+    <!-- Header Section -->
+    <header class="bg-gradient-to-r from-indigo-600 via-purple-600 to-rose-600 text-white shadow-lg sticky top-0 z-30">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-white/20 backdrop-blur-md p-2.5 rounded-2xl shadow-inner flex items-center gap-1 text-xl font-bold">
+                    <span class="text-rose-200">♥</span>
+                    <span class="text-slate-100">♠</span>
+                </div>
+                <div>
+                    <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight">1<span class="text-rose-200">♥</span> or 1<span class="text-slate-200">♠</span> – (Dbl)</h1>
+                    <p class="text-xs sm:text-sm text-indigo-100 font-medium">Expert Transfer System & Interactive Trainer</p>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <nav class="flex bg-black/20 backdrop-blur-sm p-1.5 rounded-2xl w-full sm:w-auto">
+                <button id="tab-guide" onclick="switchTab('guide')" class="flex-1 sm:flex-none px-5 py-2 rounded-xl text-sm font-bold transition-all bg-white text-indigo-700 shadow-sm">
+                    📚 Study Guide
+                </button>
+                <button id="tab-quiz" onclick="switchTab('quiz')" class="flex-1 sm:flex-none px-5 py-2 rounded-xl text-sm font-bold transition-all text-white hover:bg-white/10">
+                    🎯 Practice Quiz
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-6xl mx-auto px-4 sm:px-6 py-8">
+
+        <!-- ==================== STUDY GUIDE VIEW ==================== -->
+        <section id="view-guide" class="space-y-8">
+            
+            <!-- Intro Banner & Opening Selector -->
+            <div class="bg-white rounded-3xl p-6 sm:p-8 shadow-xl shadow-indigo-100/60 border border-indigo-100 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
+                <div class="space-y-2 max-w-2xl">
+                    <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 text-xs font-bold uppercase tracking-wider">
+                        ✨ Competitive Bidding Convention
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold text-slate-900">Transfers After Takeout Double</h2>
+                    <p class="text-slate-600 text-sm sm:text-base leading-relaxed">
+                        After partner opens <strong class="text-rose-600">1♥</strong> or <strong class="text-slate-900">1♠</strong> and RHO makes a takeout double <span class="px-2 py-0.5 bg-red-100 text-red-700 font-bold rounded-md text-xs">(Dbl)</span>, most experts use transfers to separate weak raises from constructive raises and show side-suit features.
+                    </p>
+                </div>
+
+                <!-- Interactive Opening Filter Toggle -->
+                <div class="bg-slate-100 p-2 rounded-2xl border border-slate-200 w-full lg:w-auto shrink-0">
+                    <p class="text-xs font-bold text-slate-500 uppercase tracking-wider px-2 pb-1.5 text-center">Filter by Partner's Opening:</p>
+                    <div class="grid grid-cols-3 gap-1.5">
+                        <button onclick="filterOpening('all')" id="filter-all" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 text-white shadow transition-all">
+                            Both (1♥/1♠)
+                        </button>
+                        <button onclick="filterOpening('1H')" id="filter-1H" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:bg-white transition-all">
+                            1<span class="text-rose-600">♥</span> – (Dbl)
+                        </button>
+                        <button onclick="filterOpening('1S')" id="filter-1S" class="px-3 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:bg-white transition-all">
+                            1<span class="text-slate-900">♠</span> – (Dbl)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Cards Grid for All Sequences -->
+            <div id="sequences-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Cards dynamically injected via JS for clean filtering & rich presentation -->
+            </div>
+
+            <!-- Quick Comparison Cheat Sheet -->
+            <div class="bg-gradient-to-r from-slate-900 to-indigo-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl">
+                <h3 class="text-xl font-bold mb-4 flex items-center gap-2">
+                    <span>⚡</span> Key Distinction: Lousy Raise vs. Constructive Raise
+                </h3>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/10">
+                        <div class="text-rose-300 font-extrabold text-lg mb-2">After 1<span class="text-rose-400">♥</span> – (Dbl)</div>
+                        <ul class="space-y-2 text-sm text-slate-200">
+                            <li class="flex items-center justify-between bg-black/20 px-3 py-2 rounded-xl">
+                                <span class="font-bold text-amber-300">2♦ (Transfer to ♥)</span>
+                                <span>Constructive Raise (8–10 HCP)</span>
+                            </li>
+                            <li class="flex items-center justify-between bg-black/20 px-3 py-2 rounded-xl">
+                                <span class="font-bold text-rose-300">2♥ (Direct Raise)</span>
+                                <span>Lousy Raise (4–7 HCP)</span>
+                            </li>
+                        </ul>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-sm rounded-2xl p-5 border border-white/10">
+                        <div class="text-sky-300 font-extrabold text-lg mb-2">After 1<span class="text-white">♠</span> – (Dbl)</div>
+                        <ul class="space-y-2 text-sm text-slate-200">
+                            <li class="flex items-center justify-between bg-black/20 px-3 py-2 rounded-xl">
+                                <span class="font-bold text-emerald-300">2♥ (Transfer to ♠)</span>
+                                <span>Constructive Raise (8–10 HCP)</span>
+                            </li>
+                            <li class="flex items-center justify-between bg-black/20 px-3 py-2 rounded-xl">
+                                <span class="font-bold text-sky-300">2♠ (Direct Raise)</span>
+                                <span>Lousy Raise (4–7 HCP)</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ==================== QUIZ VIEW ==================== -->
+        <section id="view-quiz" class="hidden max-w-3xl mx-auto">
+            <div class="bg-white rounded-3xl shadow-xl shadow-purple-100/80 border border-purple-100 overflow-hidden">
+                
+                <!-- Quiz Top Progress Bar -->
+                <div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
+                    <div class="flex items-center justify-between mb-3">
+                        <span id="quiz-progress-text" class="text-xs sm:text-sm font-bold uppercase tracking-wider bg-white/20 px-3 py-1 rounded-full">
+                            Question 1 of 10
+                        </span>
+                        <span id="quiz-score-badge" class="text-xs sm:text-sm font-bold bg-amber-400 text-slate-900 px-3 py-1 rounded-full shadow">
+                            Score: 0
+                        </span>
+                    </div>
+                    <div class="w-full bg-black/25 rounded-full h-2.5 overflow-hidden">
+                        <div id="quiz-progress-bar" class="bg-amber-400 h-2.5 rounded-full transition-all duration-500" style="width: 10%"></div>
+                    </div>
+                </div>
+
+                <!-- Active Question Container -->
+                <div id="quiz-question-area" class="p-6 sm:p-8 space-y-6">
+                    <!-- Auction Table Graphic -->
+                    <div class="bg-emerald-900 rounded-2xl p-4 sm:p-5 text-white shadow-inner border-4 border-emerald-800">
+                        <div class="text-center text-xs uppercase tracking-widest text-emerald-300 font-bold mb-3">Bidding Table</div>
+                        <div class="grid grid-cols-4 gap-2 text-center text-sm sm:text-base font-bold">
+                            <div class="bg-emerald-950/60 py-2 rounded-xl text-emerald-200">Partner</div>
+                            <div class="bg-emerald-950/60 py-2 rounded-xl text-rose-200">RHO</div>
+                            <div class="bg-emerald-950/60 py-2 rounded-xl text-amber-300">You</div>
+                            <div class="bg-emerald-950/60 py-2 rounded-xl text-emerald-200">LHO</div>
+
+                            <div id="table-partner" class="bg-white text-slate-900 py-3 rounded-xl text-lg shadow">1♥</div>
+                            <div class="bg-red-600 text-white py-3 rounded-xl text-lg shadow">Dbl</div>
+                            <div id="table-you" class="bg-amber-300 text-slate-900 py-3 rounded-xl text-lg shadow animate-pulse">?</div>
+                            <div class="bg-emerald-800/50 text-emerald-400 py-3 rounded-xl text-lg">—</div>
+                        </div>
+                    </div>
+
+                    <!-- Scenario / Question Prompt -->
+                    <div class="space-y-2">
+                        <span id="quiz-category-tag" class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-purple-100 text-purple-700">
+                            Meaning & Range
+                        </span>
+                        <h3 id="quiz-question-text" class="text-xl sm:text-2xl font-extrabold text-slate-900 leading-snug">
+                            Loading question...
+                        </h3>
+                        <div id="quiz-hand-box" class="hidden mt-3 p-4 bg-slate-50 border border-slate-200 rounded-2xl font-mono text-base sm:text-lg space-y-1">
+                            <!-- Optional hand display -->
+                        </div>
+                    </div>
+
+                    <!-- Answer Options -->
+                    <div id="quiz-options" class="grid grid-cols-1 gap-3">
+                        <!-- Buttons injected by JS -->
+                    </div>
+
+                    <!-- Instant Explanation Feedback -->
+                    <div id="quiz-feedback" class="hidden rounded-2xl p-5 border-2 transition-all">
+                        <div class="flex items-start gap-3">
+                            <div id="feedback-icon" class="text-2xl">✅</div>
+                            <div class="space-y-1">
+                                <h4 id="feedback-title" class="font-extrabold text-base sm:text-lg">Correct!</h4>
+                                <p id="feedback-explanation" class="text-sm leading-relaxed"></p>
+                            </div>
+                        </div>
+                        <div class="mt-4 flex justify-end">
+                            <button onclick="nextQuestion()" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow transition-all">
+                                Next Question →
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quiz Results Summary Screen -->
+                <div id="quiz-results-area" class="hidden p-8 sm:p-10 text-center space-y-6">
+                    <div class="w-20 h-20 mx-auto bg-gradient-to-tr from-amber-400 to-orange-500 rounded-3xl flex items-center justify-center text-4xl shadow-lg text-white">
+                        🏆
+                    </div>
+                    <div class="space-y-2">
+                        <h3 class="text-3xl font-extrabold text-slate-900">Quiz Complete!</h3>
+                        <p id="results-subtitle" class="text-slate-600 text-base">Great job mastering competitive transfers!</p>
+                    </div>
+                    <div class="inline-block bg-indigo-50 border border-indigo-100 rounded-3xl px-8 py-5">
+                        <div class="text-xs font-bold uppercase tracking-wider text-indigo-500">Final Score</div>
+                        <div id="final-score-display" class="text-4xl font-black text-indigo-700 mt-1">8 / 10</div>
+                    </div>
+                    <div class="flex flex-col sm:flex-row justify-center gap-3 pt-4">
+                        <button onclick="restartQuiz()" class="px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl shadow-md transition-all">
+                            🔄 Play Again
+                        </button>
+                        <button onclick="switchTab('guide')" class="px-6 py-3 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold rounded-2xl transition-all">
+                            📚 Review Study Guide
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // Complete dataset derived directly from the user's document
+        const sequencesData = [
+            {
+                id: 'xx',
+                bid: 'Redouble (XX)',
+                bidHtml: '<span class="text-blue-700">XX</span> (Redouble)',
+                appliesTo: ['1H', '1S'],
+                badge: '10+ HCP',
+                colorTheme: 'from-blue-500 to-indigo-600',
+                bgLight: 'bg-blue-50',
+                borderLight: 'border-blue-200',
+                tagColor: 'bg-blue-100 text-blue-800',
+                meaningTitle: 'Any 10+ HCP Hand',
+                description: 'Shows strength (10+ HCP) regardless of whether you have support for opener’s major. Sets up a penalty or forcing auction.',
+                exampleHand: '♠ KQ84  ♥ 72  ♦ AQ95  ♣ J63 (12 HCP)'
+            },
+            {
+                id: '1s-over-1h',
+                bid: '1♠ (over 1♥ – Dbl)',
+                bidHtml: '1<span class="suit-spade">♠</span> <span class="text-xs font-semibold text-slate-500">(over 1♥)</span>',
+                appliesTo: ['1H'],
+                badge: 'Transfer to NT (7–10 HCP)',
+                colorTheme: 'from-violet-500 to-purple-600',
+                bgLight: 'bg-violet-50',
+                borderLight: 'border-violet-200',
+                tagColor: 'bg-violet-100 text-violet-800',
+                meaningTitle: 'Transfer to Notrump (7–10 HCP)',
+                description: 'Only applies when the opening bid was 1♥! Shows ~7–10 HCP with scattered values, no great suit of your own, and no particular fit for hearts.',
+                exampleHand: '♠ QJ9  ♥ 84  ♦ KJ72  ♣ Q864 (9 HCP)'
+            },
+            {
+                id: '1nt',
+                bid: '1NT',
+                bidHtml: '1NT',
+                appliesTo: ['1H', '1S'],
+                badge: 'Transfer to ♣',
+                colorTheme: 'from-emerald-500 to-teal-600',
+                bgLight: 'bg-emerald-50',
+                borderLight: 'border-emerald-200',
+                tagColor: 'bg-emerald-100 text-emerald-800',
+                meaningTitle: 'Transfer to Clubs (♣)',
+                description: 'Shows either a natural club suit OR a raise of opener’s major with club cards, values, length, or a lead-directing/game-try feature.',
+                exampleHand: '♠ 63  ♥ K84  ♦ 952  ♣ KQJ84 (9 HCP)'
+            },
+            {
+                id: '2c',
+                bid: '2♣',
+                bidHtml: '2<span class="suit-club">♣</span>',
+                appliesTo: ['1H', '1S'],
+                badge: 'Transfer to ♦',
+                colorTheme: 'from-amber-500 to-orange-600',
+                bgLight: 'bg-amber-50',
+                borderLight: 'border-amber-200',
+                tagColor: 'bg-amber-100 text-amber-800',
+                meaningTitle: 'Transfer to Diamonds (♦)',
+                description: 'Shows either a natural diamond suit OR a raise of opener’s major with diamond cards, values, length, or a feature.',
+                exampleHand: '♠ Q94  ♥ 73  ♦ KQJ85  ♣ 842 (8 HCP)'
+            },
+            {
+                id: '2d',
+                bid: '2♦',
+                bidHtml: '2<span class="suit-diamond">♦</span>',
+                appliesTo: ['1H', '1S'],
+                badge: 'Transfer to ♥',
+                colorTheme: 'from-rose-500 to-pink-600',
+                bgLight: 'bg-rose-50',
+                borderLight: 'border-rose-200',
+                tagColor: 'bg-rose-100 text-rose-800',
+                meaningTitle: 'Transfer to Hearts (♥)',
+                description: '• Over 1♥: Constructive heart raise (8–10 HCP).\n• Over 1♠: Either natural hearts OR a spade raise with heart cards/values/length/feature.',
+                exampleHand: '♠ 85  ♥ K964  ♦ Q83  ♣ J742 (8 HCP over 1♥)'
+            },
+            {
+                id: '2h',
+                bid: '2♥',
+                bidHtml: '2<span class="suit-heart">♥</span>',
+                appliesTo: ['1H', '1S'],
+                badge: '4–7 Raise (1♥) / 8–10 Transfer (1♠)',
+                colorTheme: 'from-pink-500 to-rose-700',
+                bgLight: 'bg-pink-50',
+                borderLight: 'border-pink-200',
+                tagColor: 'bg-pink-100 text-pink-800',
+                meaningTitle: 'Weak ♥ Raise OR Constructive ♠ Raise',
+                description: '• Over 1♥: A lousy/weak heart raise (4–7 HCP).\n• Over 1♠: Transfer to spades, showing a constructive spade raise (8–10 HCP).',
+                exampleHand: '♠ Q974  ♥ 63  ♦ K842  ♣ 953 (8 HCP over 1♠)'
+            },
+            {
+                id: '2s',
+                bid: '2♠',
+                bidHtml: '2<span class="suit-spade">♠</span>',
+                appliesTo: ['1H', '1S'],
+                badge: '4–7 Raise (1♠) / Weak Jump (1♥)',
+                colorTheme: 'from-slate-600 to-slate-800',
+                bgLight: 'bg-slate-100',
+                borderLight: 'border-slate-300',
+                tagColor: 'bg-slate-200 text-slate-800',
+                meaningTitle: 'Lousy ♠ Raise OR Weak Jump in Comp',
+                description: '• Over 1♠: A lousy/weak spade raise (4–7 HCP).\n• Over 1♥: A plain old natural weak jump shift in competition (long spades, weak hand).',
+                exampleHand: '♠ KQJ864  ♥ 7  ♦ 953  ♣ 842 (6 HCP over 1♥)'
+            },
+            {
+                id: 'fit-jump',
+                bid: 'Jump in New Suit',
+                bidHtml: 'Jump in New Suit <span class="text-xs font-normal">(e.g. 3♣/3♦)</span>',
+                appliesTo: ['1H', '1S'],
+                badge: 'Fit Jump (4+ Support)',
+                colorTheme: 'from-cyan-500 to-blue-600',
+                bgLight: 'bg-cyan-50',
+                borderLight: 'border-cyan-200',
+                tagColor: 'bg-cyan-100 text-cyan-800',
+                meaningTitle: 'Fit-Showing Jump',
+                description: 'Shows 4-card (usually) support for opener’s major PLUS length and strength in the jump-bid suit. Helps opener judge slam or competitive game.',
+                exampleHand: '♠ K974  ♥ 82  ♦ AQJ85  ♣ 63 (10 HCP over 1♠)'
+            },
+            {
+                id: '2nt',
+                bid: 'Jump to 2NT',
+                bidHtml: '2NT <span class="text-xs font-normal">(Jump)</span>',
+                appliesTo: ['1H', '1S'],
+                badge: 'Limit Raise (10–12 HCP)',
+                colorTheme: 'from-fuchsia-500 to-purple-700',
+                bgLight: 'bg-fuchsia-50',
+                borderLight: 'border-fuchsia-200',
+                tagColor: 'bg-fuchsia-100 text-fuchsia-800',
+                meaningTitle: 'Invitational 4-Card Raise (10–12 HCP)',
+                description: 'Shows invitational strength (about 10–12 HCP) and 4-card support for opener’s major (Jordan 2NT style).',
+                exampleHand: '♠ QJ84  ♥ K93  ♦ 74  ♣ K852 (11 HCP over 1♠)'
+            },
+            {
+                id: 'jump-raise',
+                bid: 'Jump Raise (3♥ / 3♠)',
+                bidHtml: '3<span class="suit-heart">♥</span> or 3<span class="suit-spade">♠</span> <span class="text-xs font-normal">(Jump)</span>',
+                appliesTo: ['1H', '1S'],
+                badge: 'Preemptive / Weak',
+                colorTheme: 'from-orange-500 to-red-600',
+                bgLight: 'bg-orange-50',
+                borderLight: 'border-orange-200',
+                tagColor: 'bg-orange-100 text-orange-800',
+                meaningTitle: 'Natural and Weak Jump Raise',
+                description: 'Preemptive raise with 4+ trumps and a weak hand (less than constructive values) designed to jam the opponents’ auction.',
+                exampleHand: '♠ 83  ♥ Q9764  ♦ J852  ♣ 74 (4 HCP over 1♥)'
+            }
+        ];
+
+        // Comprehensive 10-question quiz testing every sequence in the document
+        const quizQuestions = [
+            {
+                partnerBid: '1♥',
+                category: 'Redouble Meaning',
+                question: 'Partner opens 1♥ and RHO doubles. What does a Redouble (XX) show in this system?',
+                hand: null,
+                options: [
+                    'Any hand with 10+ HCP (with or without heart support)',
+                    'A weak raise to 2♥ with 4–7 HCP',
+                    'A transfer to spades with 5+ spades',
+                    'A 4-card limit raise (10–12 HCP) only'
+                ],
+                correctIndex: 0,
+                explanation: 'Redouble (XX) shows any hand with 10+ HCP, regardless of fit for opener’s major.'
+            },
+            {
+                partnerBid: '1♥',
+                category: '1♠ Over 1♥ – (Dbl)',
+                question: 'After 1♥ – (Dbl), you bid 1♠. What does this bid show?',
+                hand: '♠ QJ8  ♥ 74  ♦ KJ93  ♣ Q852 (9 HCP)',
+                options: [
+                    '5+ spades and 6+ HCP',
+                    'Transfer to Notrump (7–10 HCP, scattered values, no great suit or heart fit)',
+                    'Constructive heart raise (8–10 HCP)',
+                    'Natural club suit'
+                ],
+                correctIndex: 1,
+                explanation: 'Specifically when 1♥ was opened, 1♠ acts as a transfer to Notrump—showing roughly 7–10 HCP with scattered values and no great suit or heart fit.'
+            },
+            {
+                partnerBid: '1♠',
+                category: '1NT Transfer',
+                question: 'Partner opens 1♠ and RHO doubles. You bid 1NT. What are the two possible hand types you hold?',
+                hand: null,
+                options: [
+                    '7–10 HCP balanced OR a weak spade raise',
+                    'A club suit OR a spade raise with club cards/values/length/feature',
+                    'A diamond suit OR a spade raise with diamond cards/values/length/feature',
+                    '10–12 HCP with 4-card spade support'
+                ],
+                correctIndex: 1,
+                explanation: '1NT is a transfer to clubs: it shows either a club suit, or a raise of opener’s major with club cards, values, length, or a feature.'
+            },
+            {
+                partnerBid: '1♥',
+                category: 'Constructive vs. Lousy Raise',
+                question: 'Partner opens 1♥ and RHO doubles. You hold 9 HCP with 3-card heart support and no side feature. What should you bid?',
+                hand: '♠ K74  ♥ Q96  ♦ Q853  ♣ J72 (9 HCP)',
+                options: [
+                    '2♥ (Direct raise)',
+                    '2♦ (Transfer to hearts)',
+                    '2NT (Jump)',
+                    'Redouble (XX)'
+                ],
+                correctIndex: 1,
+                explanation: 'Over 1♥ – (Dbl), 2♦ is a transfer to hearts showing a constructive raise (8–10 HCP). A direct 2♥ would show a lousy raise (4–7 HCP).'
+            },
+            {
+                partnerBid: '1♠',
+                category: '2♦ Over 1♠ – (Dbl)',
+                question: 'Partner opens 1♠ and RHO doubles. You bid 2♦. What does this transfer show?',
+                hand: null,
+                options: [
+                    'Natural diamonds',
+                    'Constructive spade raise (8–10 HCP)',
+                    'Either hearts OR a spade raise with heart cards/values/length/feature',
+                    'Lousy spade raise (4–7 HCP)'
+                ],
+                correctIndex: 2,
+                explanation: '2♦ is always a transfer to hearts. When 1♠ was opened, it shows either natural hearts or a spade raise with heart cards/values/length/feature.'
+            },
+            {
+                partnerBid: '1♠',
+                category: '2♥ Over 1♠ – (Dbl)',
+                question: 'Partner opens 1♠ and RHO doubles. You hold 9 HCP and 3-card spade support. Which bid shows this constructive raise?',
+                hand: '♠ K85  ♥ Q73  ♦ J964  ♣ K82 (9 HCP)',
+                options: [
+                    '2♠',
+                    '2♥',
+                    '2NT',
+                    '2♦'
+                ],
+                correctIndex: 1,
+                explanation: 'When 1♠ is opened, 2♥ is a transfer to spades showing a constructive raise (8–10 HCP). Bidding 2♠ directly shows a lousy raise (4–7 HCP).'
+            },
+            {
+                partnerBid: '1♥',
+                category: '2♠ Over 1♥ – (Dbl)',
+                question: 'Partner opens 1♥ and RHO doubles. What does a jump to 2♠ show?',
+                hand: '♠ KQJ974  ♥ 6  ♦ 853  ♣ 942 (6 HCP)',
+                options: [
+                    'A lousy heart raise (4–7 HCP)',
+                    'A fit-showing jump with 4 hearts and good spades',
+                    'A plain old natural weak jump in competition',
+                    'Transfer to Notrump (7–10 HCP)'
+                ],
+                correctIndex: 2,
+                explanation: 'Over 1♥ – (Dbl), 2♠ is NOT a transfer—it is a plain old natural weak jump shift in competition! (2♠ is only a lousy raise when 1♠ was opened).'
+            },
+            {
+                partnerBid: '1♠',
+                category: 'Fit Jumps',
+                question: 'Partner opens 1♠ and RHO doubles. You jump to 3♦ (jump in a new suit). What does this promise?',
+                hand: '♠ QJ84  ♥ 7  ♦ KQJ95  ♣ 842 (9 HCP)',
+                options: [
+                    'Weak hand with long diamonds only',
+                    'A fit jump: usually 4-card spade support plus length and strength in diamonds',
+                    'Transfer to hearts with 10+ HCP',
+                    'A natural forcing single-suited diamond hand'
+                ],
+                correctIndex: 1,
+                explanation: 'A jump bid in a new suit is a Fit Jump, showing 4-card (usually) support for opener’s major along with length and strength in the suit bid.'
+            },
+            {
+                partnerBid: '1♥',
+                category: 'Jump to 2NT',
+                question: 'Partner opens 1♥ and RHO doubles. What does a jump to 2NT show?',
+                hand: '♠ A83  ♥ KJ74  ♦ Q95  ♣ 842 (11 HCP)',
+                options: [
+                    'Invitational strength (~10–12 HCP) and 4-card support for opener’s major',
+                    'Natural balanced hand with 13–15 HCP and no heart fit',
+                    'Transfer to clubs with 4–7 HCP',
+                    'Constructive 3-card raise (8–10 HCP)'
+                ],
+                correctIndex: 0,
+                explanation: 'A jump to 2NT shows invitational strength (about 10–12 HCP) and 4-card support for opener’s major.'
+            },
+            {
+                partnerBid: '1♠',
+                category: '2♣ Transfer',
+                question: 'Partner opens 1♠ and RHO doubles. You hold 4 spades, 5 strong diamonds, and 8 HCP, and want to show a spade raise with diamond values/length. What do you bid?',
+                hand: '♠ Q964  ♥ 82  ♦ KQJ73  ♣ 64 (8 HCP)',
+                options: [
+                    '2♦',
+                    '2♣ (Transfer to diamonds)',
+                    '1NT',
+                    '3♠'
+                ],
+                correctIndex: 1,
+                explanation: '2♣ is a transfer to diamonds, showing either a diamond suit OR a raise of the major with diamond cards/values/length/feature.'
+            }
+        ];
+
+        // State Variables
+        let currentOpeningFilter = 'all';
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let answeredCurrent = false;
+
+        // Render Study Guide Cards
+        function renderSequences() {
+            const grid = document.getElementById('sequences-grid');
+            grid.innerHTML = '';
+
+            const filtered = sequencesData.filter(item => {
+                if (currentOpeningFilter === 'all') return true;
+                return item.appliesTo.includes(currentOpeningFilter);
+            });
+
+            filtered.forEach(item => {
+                const card = document.createElement('div');
+                card.className = `card-hover rounded-3xl bg-white border ${item.borderLight} shadow-md overflow-hidden flex flex-col justify-between`;
+                
+                // Format multiline descriptions cleanly
+                const formattedDesc = item.description.split('\n').map(line => {
+                    if (line.startsWith('•')) {
+                        return `<p class="text-sm text-slate-700 leading-relaxed pl-2 border-l-2 border-indigo-300 my-1.5">${line}</p>`;
+                    }
+                    return `<p class="text-sm text-slate-600 leading-relaxed">${line}</p>`;
+                }).join('');
+
+                card.innerHTML = `
+                    <div>
+                        <!-- Colorful Top Header -->
+                        <div class="bg-gradient-to-r ${item.colorTheme} p-4 text-white flex items-center justify-between">
+                            <span class="text-xs font-extrabold uppercase tracking-wider bg-black/20 px-2.5 py-1 rounded-full">
+                                ${item.badge}
+                            </span>
+                            <div class="flex gap-1 text-xs font-bold">
+                                ${item.appliesTo.includes('1H') ? '<span class="bg-white/25 px-2 py-0.5 rounded-md">1♥</span>' : ''}
+                                ${item.appliesTo.includes('1S') ? '<span class="bg-white/25 px-2 py-0.5 rounded-md">1♠</span>' : ''}
+                            </div>
+                        </div>
+
+                        <!-- Card Body -->
+                        <div class="p-5 space-y-3">
+                            <div class="flex items-baseline justify-between">
+                                <h3 class="text-2xl font-black text-slate-900">${item.bidHtml}</h3>
+                            </div>
+                            <div class="inline-block px-3 py-1 rounded-xl text-xs font-bold ${item.tagColor}">
+                                ${item.meaningTitle}
+                            </div>
+                            <div class="pt-1 space-y-1">
+                                ${formattedDesc}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Example Hand Footer -->
+                    <div class="${item.bgLight} px-5 py-3 border-t ${item.borderLight}">
+                        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-0.5">Example Hand</div>
+                        <div class="font-mono text-xs sm:text-sm font-semibold text-slate-800">${item.exampleHand}</div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Filter Study Guide by Opening Bid
+        function filterOpening(filter) {
+            currentOpeningFilter = filter;
+            
+            // Update button active states
+            ['all', '1H', '1S'].forEach(key => {
+                const btn = document.getElementById(`filter-${key}`);
+                if (key === filter) {
+                    btn.className = 'px-3 py-2 rounded-xl text-xs sm:text-sm font-bold bg-indigo-600 text-white shadow transition-all';
+                } else {
+                    btn.className = 'px-3 py-2 rounded-xl text-xs sm:text-sm font-bold text-slate-700 hover:bg-white transition-all';
+                }
+            });
+
+            renderSequences();
+        }
+
+        // Tab Switching (Study Guide vs Quiz)
+        function switchTab(tab) {
+            const guideView = document.getElementById('view-guide');
+            const quizView = document.getElementById('view-quiz');
+            const tabGuideBtn = document.getElementById('tab-guide');
+            const tabQuizBtn = document.getElementById('tab-quiz');
+
+            if (tab === 'guide') {
+                guideView.classList.remove('hidden');
+                quizView.classList.add('hidden');
+                tabGuideBtn.className = 'flex-1 sm:flex-none px-5 py-2 rounded-xl text-sm font-bold transition-all bg-white text-indigo-700 shadow-sm';
+                tabQuizBtn.className = 'flex-1 sm:flex-none px-5 py-2 rounded-xl text-sm font-bold transition-all text-white hover:bg-white/10';
+            } else {
+                guideView.classList.add('hidden');
+                quizView.classList.remove('hidden');
+                tabQuizBtn.className = 'flex-1 sm:flex-none px-5 py-2 rounded-xl text-sm font-bold transition-all bg-white text-indigo-700 shadow-sm';
+                tabGuideBtn.className = 'flex-1 sm:flex-none px-5 py-2 rounded-xl text-sm font-bold transition-all text-white hover:bg-white/10';
+                
+                // Initialize quiz if first time
+                if (currentQuestionIndex === 0 && !answeredCurrent) {
+                    loadQuestion();
+                }
+            }
+        }
+
+        // Load Current Quiz Question
+        function loadQuestion() {
+            answeredCurrent = false;
+            const q = quizQuestions[currentQuestionIndex];
+            
+            document.getElementById('quiz-question-area').classList.remove('hidden');
+            document.getElementById('quiz-results-area').classList.add('hidden');
+            document.getElementById('quiz-feedback').classList.add('hidden');
+
+            // Update Progress Bar & Counters
+            const total = quizQuestions.length;
+            document.getElementById('quiz-progress-text').textContent = `Question ${currentQuestionIndex + 1} of ${total}`;
+            document.getElementById('quiz-score-badge').textContent = `Score: ${score}`;
+            document.getElementById('quiz-progress-bar').style.width = `${((currentQuestionIndex + 1) / total) * 100}%`;
+
+            // Update Bidding Table
+            const partnerEl = document.getElementById('table-partner');
+            if (q.partnerBid === '1♥') {
+                partnerEl.innerHTML = '1<span class="text-rose-600">♥</span>';
+            } else {
+                partnerEl.innerHTML = '1<span class="text-slate-900">♠</span>';
+            }
+
+            // Update Prompt & Optional Hand
+            document.getElementById('quiz-category-tag').textContent = q.category;
+            document.getElementById('quiz-question-text').textContent = q.question;
+
+            const handBox = document.getElementById('quiz-hand-box');
+            if (q.hand) {
+                handBox.classList.remove('hidden');
+                handBox.innerHTML = `<span class="text-xs font-sans font-bold uppercase text-slate-400 block mb-1">Your Hand:</span>${formatSuits(q.hand)}`;
+            } else {
+                handBox.classList.add('hidden');
+            }
+
+            // Render Options
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+
+            q.options.forEach((optText, idx) => {
+                const btn = document.createElement('button');
+                btn.id = `opt-btn-${idx}`;
+                btn.onclick = () => selectAnswer(idx);
+                btn.className = 'w-full text-left p-4 rounded-2xl border-2 border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/50 font-semibold text-slate-800 transition-all flex items-center gap-3';
+                
+                const letter = ['A', 'B', 'C', 'D'][idx];
+                btn.innerHTML = `
+                    <span class="w-8 h-8 rounded-xl bg-slate-100 text-slate-700 font-bold flex items-center justify-center shrink-0">${letter}</span>
+                    <span>${formatSuits(optText)}</span>
+                `;
+                optionsContainer.appendChild(btn);
+            });
+        }
+
+        // Format suit symbols with colors in text
+        function formatSuits(text) {
+            return text
+                .replace(/♥/g, '<span class="text-rose-600 font-bold">♥</span>')
+                .replace(/♦/g, '<span class="text-orange-500 font-bold">♦</span>')
+                .replace(/♣/g, '<span class="text-emerald-600 font-bold">♣</span>')
+                .replace(/♠/g, '<span class="text-slate-900 font-bold">♠</span>');
+        }
+
+        // Handle Answer Selection
+        function selectAnswer(selectedIndex) {
+            if (answeredCurrent) return;
+            answeredCurrent = true;
+
+            const q = quizQuestions[currentQuestionIndex];
+            const isCorrect = selectedIndex === q.correctIndex;
+
+            if (isCorrect) {
+                score++;
+                document.getElementById('quiz-score-badge').textContent = `Score: ${score}`;
+            }
+
+            // Style all option buttons to reveal right/wrong
+            q.options.forEach((_, idx) => {
+                const btn = document.getElementById(`opt-btn-${idx}`);
+                btn.disabled = true;
+                btn.classList.remove('hover:border-indigo-400', 'hover:bg-indigo-50/50');
+
+                if (idx === q.correctIndex) {
+                    btn.className = 'w-full text-left p-4 rounded-2xl border-2 border-emerald-500 bg-emerald-50 font-bold text-emerald-950 flex items-center gap-3 shadow-sm';
+                    btn.querySelector('span').className = 'w-8 h-8 rounded-xl bg-emerald-500 text-white font-bold flex items-center justify-center shrink-0';
+                } else if (idx === selectedIndex && !isCorrect) {
+                    btn.className = 'w-full text-left p-4 rounded-2xl border-2 border-rose-500 bg-rose-50 font-bold text-rose-950 flex items-center gap-3';
+                    btn.querySelector('span').className = 'w-8 h-8 rounded-xl bg-rose-500 text-white font-bold flex items-center justify-center shrink-0';
+                } else {
+                    btn.className = 'w-full text-left p-4 rounded-2xl border-2 border-slate-100 bg-slate-50/50 text-slate-400 flex items-center gap-3 opacity-60';
+                }
+            });
+
+            // Show Explanation Box
+            const feedbackBox = document.getElementById('quiz-feedback');
+            const feedbackIcon = document.getElementById('feedback-icon');
+            const feedbackTitle = document.getElementById('feedback-title');
+            const feedbackExp = document.getElementById('feedback-explanation');
+
+            feedbackBox.classList.remove('hidden');
+            if (isCorrect) {
+                feedbackBox.className = 'rounded-2xl p-5 border-2 border-emerald-200 bg-emerald-50/90 text-emerald-900 transition-all';
+                feedbackIcon.textContent = '🎉';
+                feedbackTitle.textContent = 'Spot On!';
+            } else {
+                feedbackBox.className = 'rounded-2xl p-5 border-2 border-rose-200 bg-rose-50/90 text-rose-900 transition-all';
+                feedbackIcon.textContent = '💡';
+                feedbackTitle.textContent = 'Not Quite — Here’s Why:';
+            }
+            feedbackExp.innerHTML = formatSuits(q.explanation);
+        }
+
+        // Advance to Next Question or Show Results
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizQuestions.length) {
+                loadQuestion();
+            } else {
+                showResults();
+            }
+        }
+
+        // Display Final Quiz Score
+        function showResults() {
+            document.getElementById('quiz-question-area').classList.add('hidden');
+            document.getElementById('quiz-results-area').classList.remove('hidden');
+
+            const total = quizQuestions.length;
+            document.getElementById('final-score-display').textContent = `${score} / ${total}`;
+
+            const subtitle = document.getElementById('results-subtitle');
+            if (score === total) {
+                subtitle.textContent = 'Flawless! You are ready for the expert table!';
+            } else if (score >= 7) {
+                subtitle.textContent = 'Great job! You have a strong grasp of these transfers.';
+            } else {
+                subtitle.textContent = 'Good practice! Review the color-coded cards and try again.';
+            }
+        }
+
+        // Reset Quiz
+        function restartQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            loadQuestion();
+        }
+
+        // Initial Render on Page Load
+        window.onload = function() {
+            renderSequences();
+        };
+    </script>
+</body>
+</html>
